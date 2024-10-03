@@ -1,8 +1,7 @@
 <div class="oranda-hide">
 
-# tw-extension
+# taskhelper
 
 </div>
 
-Extension for [taskwarrior](https://taskwarrior.org/)
-
+Alternative frontend for [taskwarrior](https://taskwarrior.org/).

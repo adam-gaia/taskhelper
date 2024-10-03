@@ -1,19 +1,34 @@
 [package]
-name = "tw-extension"
-description = "TODO"
+name = "taskhelper"
+description = "Alternative frontend for taskwarrior"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-homepage = "https://github.com/adam-gaia/tw-extension"
-repository = "https://github.com/adam-gaia/tw-extension"
+homepage = "https://github.com/adam-gaia/taskhelper"
+repository = "https://github.com/adam-gaia/taskhelper"
 
 [dependencies]
-clap = { version = "4.5.9", features = ["derive"] }
 color-eyre = "0.6.3"
 env_logger = "0.11.3"
 log = "0.4.22"
 directories = "5.0.1"
 serde = { version = "1.0.210", features = ["derive"] }
+which = "6.0.3"
+thiserror = "1.0.64"
+nix = { version = "0.29.0", features = ["fs", "process", "term"] }
+libc = "0.2.159"
+async-stream = "0.3.5"
+tokio-stream = { version = "0.1.16", features = ["io-util"] }
+tokio-fd = "0.3.0"
+futures = "0.3.30"
+futures-core = "0.3.30"
+futures-util = "0.3.30"
+async-trait = "0.1.83"
+fern = "0.6.2"
+terminal_size = "0.4.0"
+clap = { version = "4.5.19", features = ["derive"] }
+winnow = "0.6.20"
+s-string = "1.0.0"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
