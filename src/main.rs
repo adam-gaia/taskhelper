@@ -229,7 +229,7 @@ fn main() -> Result<()> {
     // Do some initial processing of args before passing off to clap to handle multicall
     let args: Vec<String> = std::env::args().collect();
     let this_program = PathBuf::from(&args[0]);
-    let this_program = fs::canonicalize(this_program)?;
+    // let this_program = fs::canonicalize(this_program)?;
     trace!("This program: {}", this_program.display());
     let task_bin = find_taskwarrior(&this_program)?;
 
@@ -246,24 +246,26 @@ fn main() -> Result<()> {
         std::process::exit(res.code);
     }
 
-    match args[1].as_str() {
-        "--version" => {
-            let compatibility = if version_compat {
-                "compatible"
-            } else {
-                "incompatible"
-            };
-            println!(
-                "{}: {}, {}: {} ({})",
-                NAME, VERSION, TASK_BIN, taskwarrior_version, compatibility
-            );
-            std::process::exit(0);
+    if let Some(first) = args.get(1) {
+        match first.as_str() {
+            "--version" => {
+                let compatibility = if version_compat {
+                    "compatible"
+                } else {
+                    "incompatible"
+                };
+                println!(
+                    "{}: {}, {}: {} ({})",
+                    NAME, VERSION, TASK_BIN, taskwarrior_version, compatibility
+                );
+                std::process::exit(0);
+            }
+            "-V" => {
+                println!("{}", VERSION);
+                std::process::exit(0);
+            }
+            _ => {}
         }
-        "-V" => {
-            println!("{}", VERSION);
-            std::process::exit(0);
-        }
-        _ => {}
     }
 
     if !version_compat {
