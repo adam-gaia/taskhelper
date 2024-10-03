@@ -4,10 +4,16 @@ default:
 check:
     cargo lclippy
 
-build:
-    cargo lbuild
+remove-links:
+    rm ${PRJ_ROOT}/target/debug/task || true
+    rm ${PRJ_ROOT}/target/debug/tw || true
 
-run:
+build: remove-links
+    cargo lbuild
+    ln -s ${PRJ_ROOT}/target/debug/taskhelper ${PRJ_ROOT}/target/debug/task
+    ln -s ${PRJ_ROOT}/target/debug/taskhelper ${PRJ_ROOT}/target/debug/tw
+
+run: build
     RUST_LOG=debug cargo lrun
 
 doctest:

@@ -45,6 +45,8 @@ in
           ++ [treefmt-bin];
 
         enterShell = ''
+          export PRJ_ROOT=$(git rev-parse --show-toplevel)
+          export PATH="''${PRJ_ROOT}/target/debug:$PATH"
           just --list
         '';
 
