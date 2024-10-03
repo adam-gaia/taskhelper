@@ -45,7 +45,6 @@ const NAME: &'static str = env!("CARGO_BIN_NAME");
 const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
 // TODO: stdin
-// TODO: use cfg[...] to support a subcommand of commands for me, and others can have all task commands
 // TODO: add 'open' subcommand that runs 'taskopen'. Add taskopen to flake deps
 // TODO: page long outputs (maybe make this a config option to enable/disable and set pager?)
 
@@ -208,13 +207,16 @@ fn find_taskwarrior(this_program: &Path) -> Result<PathBuf> {
         bail!("Unable to find taskwarrior ('task') on the $PATH");
     };
 
-    let this_program = fs::read_link(this_program)?;
-
     // This program is a multicall binary which mimics taskwarrior if called under the name 'task'.
     // It is likely the first bin nammed 'task' on the $PATH is this program, so loop until we find another that isn't this program
     for m in matches {
+        let m = fs::canonicalize(m)?;
+        trace!("Checking if '{}' is taskwarrior", m.display());
         if m != this_program {
+            trace!("Using '{}' as taskwarrior", m.display());
             return Ok(m);
+        } else {
+            trace!("Found ourself in the path. Skipping");
         }
     }
     bail!("Unable to find taskwarrior ('task') on the $PATH");
@@ -227,7 +229,8 @@ fn main() -> Result<()> {
     // Do some initial processing of args before passing off to clap to handle multicall
     let args: Vec<String> = std::env::args().collect();
     let this_program = PathBuf::from(&args[0]);
-
+    let this_program = fs::canonicalize(this_program)?;
+    trace!("This program: {}", this_program.display());
     let task_bin = find_taskwarrior(&this_program)?;
 
     let taskwarrior_version = task_version(&task_bin)?;
@@ -236,32 +239,36 @@ fn main() -> Result<()> {
     let name = this_program.file_name().unwrap();
     debug!("name: {:?}", name);
     if name == OsString::from("task") {
-        // Mimic taskwarrior when invoked under 'task'
+        // Mimic taskwarrior when invoked under 'task'. We do this by exec-ing taskwarrior and passing args unmodified
         let task_args: Vec<String> = std::env::args().skip(1).collect();
         let res = run(&task_bin, &task_args)?;
         print!("{}", res.stdout);
         std::process::exit(res.code);
     }
 
-    if args.contains(&String::from("--version")) {
-        let compatibility = if version_compat {
-            "compatible"
-        } else {
-            "incompatible"
-        };
-        println!(
-            "{}: {}, {}: {} ({})",
-            NAME, VERSION, TASK_BIN, taskwarrior_version, compatibility
-        );
-        std::process::exit(0);
-    } else if args.contains(&String::from("-V")) {
-        println!("{}", VERSION);
-        std::process::exit(0);
+    match args[1].as_str() {
+        "--version" => {
+            let compatibility = if version_compat {
+                "compatible"
+            } else {
+                "incompatible"
+            };
+            println!(
+                "{}: {}, {}: {} ({})",
+                NAME, VERSION, TASK_BIN, taskwarrior_version, compatibility
+            );
+            std::process::exit(0);
+        }
+        "-V" => {
+            println!("{}", VERSION);
+            std::process::exit(0);
+        }
+        _ => {}
     }
 
     if !version_compat {
         warn!(
-            "Unsupported taskwarrior version {} found, but this program supports {}",
+            "Unsupported taskwarrior version {} found, but this program supports {}. Will continue anyways...",
             taskwarrior_version, SUPPORTED_TASKWARRIOR_VERSION
         );
     }
