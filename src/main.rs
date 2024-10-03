@@ -46,8 +46,6 @@ const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
 
 // TODO: stdin
 // TODO: use cfg[...] to support a subcommand of commands for me, and others can have all task commands
-// TODO: override clap's --version to give both this program and taskwarrior's versions
-// TODO: check that taskwarrior version is compatible with this program. Maybe issue a warning if not
 // TODO: add 'open' subcommand that runs 'taskopen'. Add taskopen to flake deps
 // TODO: page long outputs (maybe make this a config option to enable/disable and set pager?)
 
@@ -202,21 +200,40 @@ fn set_project(project_provided: bool, args: &mut Vec<String>, index: Index) -> 
     Ok(())
 }
 use std::ffi::OsString;
+use std::fs;
+
+/// Find task bin on the path, make sure it isn't this program (this program can be invoked under the name 'task')
+fn find_taskwarrior(this_program: &Path) -> Result<PathBuf> {
+    let Ok(matches) = which::which_all(TASK_BIN) else {
+        bail!("Unable to find taskwarrior ('task') on the $PATH");
+    };
+
+    let this_program = fs::read_link(this_program)?;
+
+    // This program is a multicall binary which mimics taskwarrior if called under the name 'task'.
+    // It is likely the first bin nammed 'task' on the $PATH is this program, so loop until we find another that isn't this program
+    for m in matches {
+        if m != this_program {
+            return Ok(m);
+        }
+    }
+    bail!("Unable to find taskwarrior ('task') on the $PATH");
+}
 
 fn main() -> Result<()> {
     color_eyre::install()?;
     env_logger::init();
 
-    let Ok(task_bin) = which::which(TASK_BIN) else {
-        bail!("Unable to find 'task' on the $PATH");
-    };
+    // Do some initial processing of args before passing off to clap to handle multicall
+    let args: Vec<String> = std::env::args().collect();
+    let this_program = PathBuf::from(&args[0]);
+
+    let task_bin = find_taskwarrior(&this_program)?;
+
     let taskwarrior_version = task_version(&task_bin)?;
     let version_compat = &taskwarrior_version == SUPPORTED_TASKWARRIOR_VERSION;
 
-    // Do some processing of args before passing off to clap
-    let args: Vec<String> = std::env::args().collect();
-    let path = PathBuf::from(&args[0]);
-    let name = path.file_name().unwrap();
+    let name = this_program.file_name().unwrap();
     debug!("name: {:?}", name);
     if name == OsString::from("task") {
         // Mimic taskwarrior when invoked under 'task'
