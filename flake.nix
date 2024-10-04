@@ -28,8 +28,7 @@
     };
 
     treefmt-nix = {
-      # Using my fork until typos PR goes in https://github.com/numtide/treefmt-nix/pull/239
-      url = "github:adam-gaia/treefmt-nix/typos";
+      url = "github:adam-gaia/numtide";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
