@@ -28,7 +28,7 @@
     };
 
     treefmt-nix = {
-      url = "github:adam-gaia/numtide";
+      url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
